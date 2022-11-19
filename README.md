@@ -1,5 +1,11 @@
-# Sauron Lite
+# rtx
 
-ImGui + Vulkan Framework
+raytracing experiment
 
-check main.cpp for example and usage
+## Build
+```
+mkdir Binaries/Release
+cmake . -BBinaries/Release
+cd Binaries/Release
+make
+```
