@@ -268,7 +268,7 @@ namespace SauronLT {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
-
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         ImGui::StyleColorsLight();
 
         // Setup Platform/Renderer backends
