@@ -4,18 +4,18 @@
 int main() {
     chdir("../..");
     SauronLT::Init(1280, 720, "rtx");
-    SauronLT::SetClearColor({0.6f, 0.55f, 0.75f, 1.0f});
+    SauronLT::SetBackground({0.6f, 0.55f, 0.75f, 1.0f});
 
     while (SauronLT::Running()) {
         SauronLT::BeginFrame();
 
-        ImGui::ShowDemoWindow();
-
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         ImGui::Begin("Viewport");
-        {
-            // TODO
-        }
+
+//        ImGui::Image(image->GetDescriptorSet(), { (float)image->GetWidth(), (float)image->GetHeight() },ImVec2(0, 1), ImVec2(1, 0));
+
         ImGui::End();
+        ImGui::PopStyleVar();
 
         SauronLT::EndFrame();
     }

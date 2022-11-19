@@ -1,12 +1,5 @@
 #include "SauronLT.h"
 
-static void check_vk_result(VkResult err)
-{
-    if (err == 0)
-        return;
-    std::cerr << "[VULKAN ERROR] VkResult = " << err << std::endl;
-    EXIT_IF(err < 0)
-}
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -37,9 +30,9 @@ namespace SauronLT {
     static int                      s_MinImageCount = 2;
     static bool                     s_SwapChainRebuild = false;
     static GLFWwindow*              s_Window = nullptr;
-    static ImFont*                  s_MainFont = nullptr;
 
     static bool                     s_Initialized = false;
+    static ImVec4                   s_BackgroundColor;
 
 
     // HELPER
@@ -55,11 +48,12 @@ namespace SauronLT {
         return !glfwWindowShouldClose(s_Window);
     }
 
-    void SetClearColor(const ImVec4& color) {
-        s_MainWindowData.ClearValue.color.float32[0] = color.x;
-        s_MainWindowData.ClearValue.color.float32[1] = color.y;
-        s_MainWindowData.ClearValue.color.float32[2] = color.z;
-        s_MainWindowData.ClearValue.color.float32[3] = color.w;
+    void SetBackground(const ImVec4& color) {
+//        s_MainWindowData.ClearValue.color.float32[0] = color.x;
+//        s_MainWindowData.ClearValue.color.float32[1] = color.y;
+//        s_MainWindowData.ClearValue.color.float32[2] = color.z;
+//        s_MainWindowData.ClearValue.color.float32[3] = color.w;
+        s_BackgroundColor = color;
     }
 
 
@@ -268,8 +262,17 @@ namespace SauronLT {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
         ImGui::StyleColorsLight();
+
+        ImGuiStyle& style = ImGui::GetStyle();
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            style.WindowRounding = 0.0f;
+            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        }
 
         // Setup Platform/Renderer backends
         ImGui_ImplGlfw_InitForVulkan(s_Window, true);
@@ -289,16 +292,11 @@ namespace SauronLT {
         init_info.CheckVkResultFn = check_vk_result;
         ImGui_ImplVulkan_Init(&init_info, s_MainWindowData.RenderPass);
 
-        io.Fonts->AddFontDefault();
-        s_MainFont = io.Fonts->AddFontFromFileTTF(R"(Resources/Fonts/RandyGG.ttf)", 17.0f);
-        RETURN_MSG_IF(s_MainFont == nullptr, "Failed to load RandyGG font.")
-
-        /*
         ImFontConfig fontConfig;
         fontConfig.FontDataOwnedByAtlas = false;
-        ImFont* robotoFont = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoRegular, sizeof(g_RobotoRegular), 20.0f, &fontConfig);
-        io.FontDefault = MainFont;
-        */
+        ImFont* robotoFont = io.Fonts->AddFontFromFileTTF(R"(Resources/Fonts/RandyGG.ttf)", 17.0f);
+        RETURN_MSG_IF(robotoFont == nullptr, "Failed to load RandyGG font.")
+        io.FontDefault = robotoFont;
 
         // Upload Fonts
         {
@@ -478,20 +476,65 @@ namespace SauronLT {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::PushFont(s_MainFont);
+        static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
+
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+        if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+            window_flags |= ImGuiWindowFlags_NoBackground;
+
+        ImGui::PushStyleColor(ImGuiCol_DockingEmptyBg, IM_COL32(s_BackgroundColor.x * 255, s_BackgroundColor.y * 255, s_BackgroundColor.z * 255, s_BackgroundColor.w * 255));
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::Begin("DockSpace", nullptr, window_flags);
+        ImGui::PopStyleVar();
+
+        ImGui::PopStyleVar(2);
+
+        // Submit the DockSpace
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+        {
+            ImGuiID dockspace_id = ImGui::GetID("VulkanAppDockspace");
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+        }
+        ImGui::PopStyleColor();
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15.0f);
     }
 
     void EndFrame() {
-        ImGui::PopFont();
+        ImGui::PopStyleVar();
+        ImGui::End();
+
         ImGui::Render();
         ImDrawData* draw_data = ImGui::GetDrawData();
         const bool is_minimized = (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f);
-        if (!is_minimized)
-        {
-
-
+        if (!is_minimized) {
             Render(draw_data);
+        }
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+        }
+        if (!is_minimized) {
             Present();
         }
+    }
+
+    VkDevice GetDevice() {
+        return s_Device;
+    }
+
+    VkPhysicalDevice GetPhysicalDevice() {
+        return s_PhysicalDevice;
     }
 }

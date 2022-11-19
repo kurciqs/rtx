@@ -22,6 +22,7 @@ option(GLFW_DOCUMENT_INTERNALS "Include internals in documentation" OFF)
 add_subdirectory(${GLFW_DIR})
 include_directories(${GLFW_DIR}/include)
 include_directories(Libraries/glm/)
+include_directories(Libraries/stb/)
 include_directories(Source)
 
 set(IMGUI_DIR Libraries/imgui)
@@ -33,7 +34,7 @@ set(LIBRARIES "glfw;${Vulkan_LIBRARY}")
 include_directories(${Vulkan_INCLUDE_DIR})
 
 set(IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/imgui.cpp
-        ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp Source/SauronLT.h)
+        ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp Source/SauronLT.h Source/SauronIMG.cpp Source/SauronIMG.h)
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SOURCES})
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
