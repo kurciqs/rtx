@@ -34,7 +34,7 @@ set(LIBRARIES "glfw;${Vulkan_LIBRARY}")
 include_directories(${Vulkan_INCLUDE_DIR})
 
 set(IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/imgui.cpp
-        ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp Source/SauronLT.h Source/SauronIMG.cpp Source/SauronIMG.h)
+        ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp Source/SauronLT.h Source/Renderer.cpp Source/Renderer.h)
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SOURCES})
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
