@@ -557,6 +557,10 @@ namespace SauronLT {
         }
     }
 
+    GLFWwindow *GetWindow() {
+        return s_Window;
+    }
+
     // IMAGE
 
     static uint32_t BytesPerPixel(ImageFormat format)

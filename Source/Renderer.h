@@ -2,19 +2,26 @@
 #define RTX_RENDERER_H
 
 #include "SauronLT.h"
+#include <memory>
+
+struct Ray {
+    glm::vec3 origin;
+    glm::vec3 direction;
+};
 
 class Renderer {
 public:
-    Renderer();
-    ~Renderer();
+    Renderer() = default;
+    ~Renderer() = default;
 
-    SauronLT::Image GetImage();
+    void Destroy();
+    std::shared_ptr<SauronLT::Image> GetImage();
     void Resize(uint32_t width, uint32_t height);
+    void Render();
 
 private:
-    SauronLT::Image m_Image;
-    uint32_t m_ViewportWidth, m_ViewportHeight;
-
+    std::shared_ptr<SauronLT::Image> m_Image;
+    uint32_t* m_ImageData = nullptr;
 };
 
 
