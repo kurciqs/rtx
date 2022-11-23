@@ -270,6 +270,11 @@ namespace SauronLT {
         glfwGetFramebufferSize(s_Window, &w, &h);
         RETURN_MSG_IF(!SetupVulkanWindow(surface, w, h), "Failed to set up Vulkan.")
 
+        glfwSetKeyCallback(s_Window, SauronLT::Input::keyCallback);
+        glfwSetMouseButtonCallback(s_Window, SauronLT::Input::mouseButtonCallback);
+        glfwSetCursorPosCallback(s_Window, SauronLT::Input::mouseCallback);
+        glfwSetScrollCallback(s_Window, SauronLT::Input::mouseScrollCallback);
+
         // Setup Dear ImGui context
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
