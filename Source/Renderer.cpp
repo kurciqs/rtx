@@ -1,7 +1,15 @@
 #include "Renderer.h"
 
 Renderer::Renderer() : m_Camera(45.0f, 0.001f, 1000.0f) {
+    m_Scene.spheres.resize(2);
 
+    m_Scene.spheres[0] = {
+            glm::vec3(0.1f, 0.5f, 0.4f), glm::vec3(0.0f), 0.5f
+    };
+
+    m_Scene.spheres[1] = {
+            glm::vec3(0.58f, 0.2f, 0.1f), glm::vec3(0.0f, 2.0f, 0.0f), 1.02f
+    };
 }
 
 void Renderer::Resize(uint32_t width, uint32_t height) {
@@ -26,6 +34,7 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
 
 void Renderer::Destroy() {
     m_Image->Release();
+    m_Scene.spheres.clear();
 }
 
 std::shared_ptr<SauronLT::Image> Renderer::GetImage() {
@@ -36,29 +45,31 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 {
     Ray ray{m_Camera.GetPosition(), m_Camera.GetRayDirections()[x + y * m_Image->GetWidth()]};
 
-    glm::vec3 skyColor(0.3f, 0.5f, 0.75f);
-    glm::vec3 pixelColor(0.5f, 1.0f, 0.25f);
+    glm::vec3 skyColor(0.6f, 0.7f, 0.9f);
+    glm::vec3 pixelColor(0.0f);
 
-    float radius = 0.5f;
-    float a = glm::dot(ray.direction, ray.direction);
-    float b = 2.0f * glm::dot(ray.origin, ray.direction);
-    float c = glm::dot(ray.origin, ray.origin) - radius * radius;
+    int bounces = 2;
+    float multiplier = 1.0f;
+    for (int i = 0; i < bounces; i++) {
+        HitPayload hitPayload = TraceRay(ray);
 
-    float discriminant = b * b - 4.0f * a * c;
+        if (hitPayload.distance < 0.0f) {
+            pixelColor += skyColor * multiplier;
+            break;
+        }
 
-    if (discriminant < 0.0f)
-        return glm::vec4(skyColor, 1.0f);
+        glm::vec3 lightDir = glm::normalize(glm::vec3(-1.0f));
 
-    float closestT = (-b - glm::sqrt(discriminant)) / (2.0f * a);
+        float d = glm::max(glm::dot(hitPayload.normal, -lightDir), 0.0f);
+        pixelColor += d * hitPayload.hitSphere.color * multiplier;
 
-    glm::vec3 hitPoint = ray.origin + closestT * ray.direction;
-    glm::vec3 normal = glm::normalize(hitPoint);
-    glm::vec3 lightDir = glm::normalize(glm::vec3(-1.0f));
+        multiplier *= 0.5f;
 
-    float d = glm::max(glm::dot(normal, -lightDir), 0.0f);
-    pixelColor *= d;
+        ray.origin = hitPayload.position + hitPayload.normal * 0.0001f;
+        ray.direction = glm::reflect(ray.direction, hitPayload.normal);
+    }
 
-    return glm::vec4(pixelColor, 1.0f);
+    return {pixelColor, 1.0f};
 }
 
 static uint32_t ConvertToRGBA(const glm::vec4& color)
@@ -85,6 +96,41 @@ void Renderer::Render() {
     }
 
     m_Image->SetData(m_ImageData);
+}
+
+HitPayload Renderer::TraceRay(Ray ray) {
+    bool hasHit = false;
+    HitPayload hit{.distance = FLT_MAX};
+
+    for (int i = 0; i < m_Scene.spheres.size(); i++) {
+        Sphere& sphere = m_Scene.spheres[i];
+        glm::vec3 origin = ray.origin - sphere.position;
+
+        float a = glm::dot(ray.direction, ray.direction);
+        float b = 2.0f * glm::dot(origin, ray.direction);
+        float c = glm::dot(origin, origin) - sphere.radius * sphere.radius;
+
+        float discriminant = b * b - 4.0f * a * c;
+        if (discriminant < 0.0f)
+            continue;
+
+        float closestT = (-b - glm::sqrt(discriminant)) / (2.0f * a);
+
+        if (closestT > 0.0f && closestT < hit.distance) {
+            hit.distance = closestT;
+            hit.position = origin + ray.direction * hit.distance;
+            hit.normal = glm::normalize(hit.position);
+            hit.position += sphere.position;
+            hit.hitSphere = sphere;
+            hasHit = true;
+        }
+    }
+    if (!hasHit) {
+        hit.distance = -1.0f;
+    }
+
+
+    return hit;
 }
 
 

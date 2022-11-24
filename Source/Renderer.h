@@ -14,6 +14,23 @@ struct Ray {
     glm::vec3 direction;
 };
 
+struct Sphere {
+    glm::vec3 color{1.0f};
+    glm::vec3 position{0.0f};
+    float radius = 0.5f;
+};
+
+struct HitPayload {
+    glm::vec3 position;
+    glm::vec3 normal;
+    Sphere hitSphere;
+    float distance;
+};
+
+struct Scene {
+    std::vector<Sphere> spheres;
+};
+
 class Camera
 {
 public:
@@ -54,7 +71,6 @@ private:
     std::vector<glm::vec3> m_RayDirections;
 
     glm::vec2 m_LastMousePosition{ 0.0f, 0.0f };
-
     uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
 };
 
@@ -68,9 +84,11 @@ public:
     void Resize(uint32_t width, uint32_t height);
     void Render();
     glm::vec4 PerPixel(uint32_t x, uint32_t y);
+    HitPayload TraceRay(Ray ray);
 
 private:
     std::shared_ptr<SauronLT::Image> m_Image;
+    Scene m_Scene;
     Camera m_Camera;
     uint32_t* m_ImageData = nullptr;
 };
