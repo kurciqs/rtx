@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 
 struct Ray {
@@ -14,10 +15,21 @@ struct Ray {
     glm::vec3 direction;
 };
 
+struct Material {
+    glm::vec3 albedo;
+    float roughness;
+    float metallic;
+};
+
 struct Sphere {
-    glm::vec3 color{1.0f};
+    int materialIndex;
     glm::vec3 position{0.0f};
     float radius = 0.5f;
+};
+
+struct Scene {
+    std::vector<Sphere> spheres;
+    std::vector<Material> materials;
 };
 
 struct HitPayload {
@@ -25,10 +37,6 @@ struct HitPayload {
     glm::vec3 normal;
     Sphere hitSphere;
     float distance;
-};
-
-struct Scene {
-    std::vector<Sphere> spheres;
 };
 
 class Camera
@@ -85,6 +93,7 @@ public:
     void Render();
     glm::vec4 PerPixel(uint32_t x, uint32_t y);
     HitPayload TraceRay(Ray ray);
+    Scene& GetScene() { return m_Scene; }
 
 private:
     std::shared_ptr<SauronLT::Image> m_Image;

@@ -2,13 +2,22 @@
 
 Renderer::Renderer() : m_Camera(45.0f, 0.001f, 1000.0f) {
     m_Scene.spheres.resize(2);
+    m_Scene.materials.resize(2);
 
     m_Scene.spheres[0] = {
-            glm::vec3(0.1f, 0.5f, 0.4f), glm::vec3(0.0f), 0.5f
+            0, glm::vec3(0.0f), 0.5f
     };
 
     m_Scene.spheres[1] = {
-            glm::vec3(0.58f, 0.2f, 0.1f), glm::vec3(0.0f, 2.0f, 0.0f), 1.02f
+            1, glm::vec3(2.0f, 0.0f, 0.0f), 1.02f
+    };
+
+    m_Scene.materials[0] = {
+            glm::vec3(0.4f, 0.5f, 0.6f), 0.5f, 0.0f
+    };
+
+    m_Scene.materials[1] = {
+            glm::vec3(0.0f, 0.5f, 0.1f), 0.5f, 0.0f
     };
 }
 
@@ -61,7 +70,7 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
         glm::vec3 lightDir = glm::normalize(glm::vec3(-1.0f));
 
         float d = glm::max(glm::dot(hitPayload.normal, -lightDir), 0.0f);
-        pixelColor += d * hitPayload.hitSphere.color * multiplier;
+        pixelColor += d * m_Scene.materials[hitPayload.hitSphere.materialIndex].albedo * multiplier;
 
         multiplier *= 0.5f;
 
