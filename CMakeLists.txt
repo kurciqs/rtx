@@ -11,7 +11,7 @@ ELSE()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 ENDIF()
 
-set(SOURCES Source/main.cpp Source/SauronLT.h Source/SauronLT.cpp Source/Input.cpp Source/Input.h)
+set(SOURCES Source/main.cpp Source/SauronLT.h Source/SauronLT.cpp Source/Input.cpp Source/Input.h Source/Random.cpp Source/Random.h)
 
 set(GLFW_DIR Libraries/glfw)
 option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)

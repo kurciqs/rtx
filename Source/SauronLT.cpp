@@ -539,7 +539,7 @@ namespace SauronLT {
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
         ImGui::PopStyleColor();
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 15.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 10.0f);
     }
 
     void EndFrame() {

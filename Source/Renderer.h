@@ -2,13 +2,13 @@
 #define RTX_RENDERER_H
 
 #include "SauronLT.h"
+#include "Random.h"
 #include <memory>
 #include <vector>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 
 struct Ray {
     glm::vec3 origin;
@@ -84,6 +84,10 @@ private:
 
 class Renderer {
 public:
+    struct Settings {
+        bool accumulate = true;
+    };
+public:
     Renderer();
     ~Renderer() = default;
 
@@ -94,12 +98,18 @@ public:
     glm::vec4 PerPixel(uint32_t x, uint32_t y);
     HitPayload TraceRay(Ray ray);
     Scene& GetScene() { return m_Scene; }
-
+    Settings& GetSettings() { return m_Settings; }
+    void ResetFrameIndex() { m_FrameIndex = 0; }
 private:
+    Settings m_Settings;
     std::shared_ptr<SauronLT::Image> m_Image;
     Scene m_Scene;
     Camera m_Camera;
+
+    glm::vec4* m_AccumulationData = nullptr;
     uint32_t* m_ImageData = nullptr;
+
+    uint32_t m_FrameIndex = 1;
 };
 
 

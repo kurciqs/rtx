@@ -9,15 +9,15 @@ Renderer::Renderer() : m_Camera(45.0f, 0.001f, 1000.0f) {
     };
 
     m_Scene.spheres[1] = {
-            1, glm::vec3(2.0f, 0.0f, 0.0f), 1.02f
+            1, glm::vec3(0.0f, -101.0f, 0.0f), 100.0f
     };
 
     m_Scene.materials[0] = {
-            glm::vec3(0.4f, 0.5f, 0.6f), 0.5f, 0.0f
+            glm::vec3(0.4f, 0.5f, 0.6f), 0.0f, 0.0f
     };
 
     m_Scene.materials[1] = {
-            glm::vec3(0.0f, 0.5f, 0.1f), 0.5f, 0.0f
+            glm::vec3(0.0f, 0.5f, 0.1f), 1.0f, 0.0f
     };
 }
 
@@ -38,6 +38,9 @@ void Renderer::Resize(uint32_t width, uint32_t height) {
     delete[] m_ImageData;
     m_ImageData = new uint32_t[width * height];
 
+    delete[] m_AccumulationData;
+    m_AccumulationData = new glm::vec4[width * height];
+
     m_Camera.Resize(width, height);
 }
 
@@ -54,10 +57,10 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 {
     Ray ray{m_Camera.GetPosition(), m_Camera.GetRayDirections()[x + y * m_Image->GetWidth()]};
 
-    glm::vec3 skyColor(0.6f, 0.7f, 0.9f);
+    glm::vec3 skyColor(0.1f, 0.4f, 0.8f);
     glm::vec3 pixelColor(0.0f);
 
-    int bounces = 2;
+    int bounces = 5;
     float multiplier = 1.0f;
     for (int i = 0; i < bounces; i++) {
         HitPayload hitPayload = TraceRay(ray);
@@ -70,12 +73,13 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
         glm::vec3 lightDir = glm::normalize(glm::vec3(-1.0f));
 
         float d = glm::max(glm::dot(hitPayload.normal, -lightDir), 0.0f);
-        pixelColor += d * m_Scene.materials[hitPayload.hitSphere.materialIndex].albedo * multiplier;
+        Material& material = m_Scene.materials[hitPayload .hitSphere.materialIndex];
+        pixelColor += d * material.albedo * multiplier;
 
-        multiplier *= 0.5f;
+        multiplier *= 0.7f;
 
         ray.origin = hitPayload.position + hitPayload.normal * 0.0001f;
-        ray.direction = glm::reflect(ray.direction, hitPayload.normal);
+        ray.direction = glm::reflect(ray.direction, hitPayload.normal + material.roughness * SauronLT::Random::Vec3(-0.5f, 0.5f));
     }
 
     return {pixelColor, 1.0f};
@@ -94,17 +98,29 @@ static uint32_t ConvertToRGBA(const glm::vec4& color)
 
 void Renderer::Render() {
     m_Camera.Update(0.016f);
+
+    // TODO
+    if (m_FrameIndex == 1)
+        memset(m_AccumulationData, 0, m_Image->GetWidth() * m_Image->GetHeight() * sizeof(glm::vec4));
+
     for (uint32_t y = 0; y < m_Image->GetHeight(); y++)
     {
         for (uint32_t x = 0; x < m_Image->GetWidth(); x++)
         {
             glm::vec4 color = PerPixel(x, y);
+            m_AccumulationData[x + y * m_Image->GetWidth()] += color;
+
             color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
             m_ImageData[x + y * m_Image->GetWidth()] = ConvertToRGBA(color);
         }
     }
 
     m_Image->SetData(m_ImageData);
+
+    if (m_Settings.accumulate)
+        m_FrameIndex++;
+    else
+        m_FrameIndex = 1;
 }
 
 HitPayload Renderer::TraceRay(Ray ray) {
